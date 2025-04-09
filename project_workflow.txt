@@ -1,0 +1,190 @@
+RISC-V Assembler Project Workflow Documentation
+=============================================
+
+1. Project Overview
+------------------
+This project is a RISC-V assembler that converts assembly code (input.asm) to machine code (output.mc).
+The assembler supports various RISC-V instructions and data directives.
+
+2. File Structure
+----------------
+- input.asm: Input assembly file
+- main.cpp: Main program file
+- output.mc: Output machine code file
+
+3. Class Hierarchy
+-----------------
+3.1 Base Classes
+---------------
+- instructions: Base class for all instruction types
+  - Contains common fields: instructionIn32bit, instructionInHex, opcode
+  - Provides common methods: binToHex()
+
+3.2 Instruction Type Classes
+--------------------------
+- R: R-type instructions (add, sub, and, or, etc.)
+- I: I-type instructions (addi, andi, ori, etc.)
+- S: S-type instructions (sb, sh, sw, etc.)
+- U: U-type instructions (lui, auipc)
+- UJ: UJ-type instructions (jal)
+- SB: SB-type instructions (beq, bne, blt, bge)
+
+3.3 Main Processing Class
+-----------------------
+- makeMC: Main class that handles the assembly process
+  - Manages program counter (PC)
+  - Handles memory addresses
+  - Processes labels and instructions
+  - Generates output
+
+4. Working Flow
+--------------
+4.1 Initialization Phase
+-----------------------
+1. Program starts in main()
+2. Creates makeMC object
+3. Initializes:
+   - PC = 0
+   - Memory address counter
+   - Label map
+   - Memory map
+
+4.2 First Pass - Label Collection
+-------------------------------
+1. Reads input.asm line by line
+2. For each line:
+   - Checks for labels (ends with ':')
+   - If label found:
+     - For text section: calls makeLabel()
+     - For data section: calls makeDataLabel()
+   - Stores label names and their PC/memory addresses
+
+4.3 Second Pass - Instruction Processing
+-------------------------------------
+1. For each line in input.asm:
+   - Skips comments (#)
+   - Checks for directives:
+     - .text section
+     - .data section
+     - Data directives (.byte, .half, .word, .dword, .asciz)
+   - For instructions:
+     - Identifies instruction type
+     - Creates appropriate instruction object
+     - Processes instruction fields
+     - Converts to 32-bit binary
+     - Converts to hexadecimal
+
+4.4 Data Processing
+-----------------
+1. For data directives:
+   - .byte: 8-bit values
+   - .half: 16-bit values
+   - .word: 32-bit values
+   - .dword: 64-bit values
+   - .asciz: Null-terminated strings
+2. Converts values to binary
+3. Converts to hexadecimal
+4. Stores in memory with appropriate addresses
+
+4.5 Output Generation
+-------------------
+1. Creates output.mc file
+2. For each instruction:
+   - Writes PC in hexadecimal
+   - Writes instruction in hexadecimal
+   - Writes original assembly line
+   - Writes detailed instruction information
+3. For data:
+   - Writes memory address in hexadecimal
+   - Writes data value in hexadecimal
+
+5. Error Handling
+----------------
+1. Register Validation:
+   - Checks register numbers (0-31)
+   - Reports invalid register numbers
+
+2. Immediate Value Validation:
+   - Checks immediate value ranges
+   - Reports out-of-range values
+
+3. Instruction Format Validation:
+   - Verifies correct number of operands
+   - Checks operand types
+   - Validates instruction format
+
+4. Error Reporting:
+   - Reports errors with line numbers
+   - Exits on critical errors
+
+6. Example Processing Flow
+-------------------------
+Example: Processing "add x3, x1, x2"
+
+1. Input Line: "add x3, x1, x2"
+2. checkInstruction() identifies "add"
+3. Creates R-type instruction object
+4. fetchInstructionDetails() extracts:
+   - rd = x3 (register 3)
+   - rs1 = x1 (register 1)
+   - rs2 = x2 (register 2)
+5. convertTo32bit() creates binary:
+   - opcode = 0110011
+   - funct3 = 000
+   - funct7 = 0000000
+   - rd = 00011
+   - rs1 = 00001
+   - rs2 = 00010
+6. binToHex() converts to hexadecimal
+7. Writes to output.mc:
+   PC: 0x00000000
+   Instruction: 0x002081B3
+   Original: add x3, x1, x2
+
+7. Supported Instructions
+------------------------
+7.1 Arithmetic Instructions
+-------------------------
+- add, sub, mul, div, rem
+- addi
+
+7.2 Logical Instructions
+----------------------
+- and, or, xor
+- andi, ori
+
+7.3 Shift Instructions
+--------------------
+- sll, sra, srl
+
+7.4 Memory Instructions
+---------------------
+- Load: lb, ld, lh, lw
+- Store: sb, sd, sh, sw
+
+7.5 Control Flow Instructions
+---------------------------
+- Branch: beq, bne, blt, bge
+- Jump: jal, jalr
+
+7.6 Special Instructions
+----------------------
+- lui
+- auipc
+
+8. Final Steps
+-------------
+1. Closes input and output files
+2. Adds final null instruction (0x00000000)
+3. Program terminates
+
+9. Output Format
+---------------
+Each line in output.mc contains:
+1. Program Counter (PC) in hexadecimal
+2. Machine code in hexadecimal
+3. Original assembly instruction
+4. Detailed instruction information
+
+Example:
+0x00000000 0x002081B3 add x3, x1, x2 # rd=3, rs1=1, rs2=2 
